@@ -820,6 +820,22 @@ Current discipline focus: ${discipline}. Follow the inquiry wherever it leads.`;
     return { setDiscipline, useStarter, reset };
   })();
 </script>
+  <script>
+  async function fetchReply() {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: document.querySelector('input').value
+      })
+    });
+
+    const data = await response.json();
+    console.log(data);
+  }
+</script>
 
 </body>
 </html>
