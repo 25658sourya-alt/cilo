@@ -5,11 +5,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (!HF_TOKEN) {
-    return res.status(500).json({ error: "HF_TOKEN not set in environment variables" });
-  }
-
   try {
+    const userMessage =
+      req.body.messages?.slice(-1)[0]?.content ||
+      req.body.message ||
+      "";
+
     const response = await fetch(
       "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
       {
@@ -19,22 +20,35 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: req.body.message || ""
+          inputs: userMessage,
+          parameters: {
+            max_new_tokens: 200,
+            return_full_text: false
+          }
         }),
       }
     );
 
     const data = await response.json();
 
-    const reply =
-      Array.isArray(data)
-        ? data[0]?.generated_text
-        : data.generated_text;
+    let reply = "";
 
-    return res.status(200).json({ reply: reply || "No response from model." });
+    if (Array.isArray(data)) {
+      reply = data[0]?.generated_text;
+    } else if (data.generated_text) {
+      reply = data.generated_text;
+    } else if (data.error) {
+      reply = "Model error: " + data.error;
+    }
+
+    if (!reply) {
+      reply = "The model is thinking... try again.";
+    }
+
+    res.status(200).json({ reply });
 
   } catch (error) {
-    console.error("API Error:", error);
-    return res.status(500).json({ error: "Server error" });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 }
