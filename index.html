@@ -836,6 +836,49 @@ Current discipline focus: ${discipline}. Follow the inquiry wherever it leads.`;
     console.log(data);
   }
 </script>
+  <script>
+
+async function fetchReply() {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      messages: conversationHistory,
+      discipline: currentDiscipline
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Server error");
+  }
+
+  const data = await response.json();
+  return data.reply || "Cilo paused in thought.";
+}
+
+async function send() {
+  const text = inputEl.value.trim();
+  if (!text || isLoading) return;
+
+  setLoadingState(true);
+  inputEl.value = "";
+  autoResize();
+
+  appendMessage("user", text);
+
+  try {
+    const reply = await fetchReply();
+    appendMessage("assistant", reply);
+  } catch (err) {
+    appendMessage("assistant", "Something went wrong.");
+  }
+
+  setLoadingState(false);
+}
+
+</script>
 
 </body>
 </html>
