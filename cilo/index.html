@@ -726,21 +726,25 @@ Current discipline focus: ${discipline}. Follow the inquiry wherever it leads.`;
 
     /* ── API ─────────────────────────────────────────────────────── */
 
-    async function fetchReply() {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:      'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system:     buildSystemPrompt(currentDiscipline),
-          messages:   conversationHistory,
-        }),
-      });
+    async function fetchReply() {async function fetchReply() {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      messages: conversationHistory,
+      discipline: currentDiscipline
+    })
+  });
 
-      if (!response.ok) throw new Error(`API ${response.status}`);
-      const data = await response.json();
-      return data.content?.[0]?.text ?? '';
+  if (!response.ok) {
+    throw new Error("Server error");
+  }
+
+  const data = await response.json();
+  return data.reply || "Cilo paused in thought.";
+}
     }
 
     /* ── Core send flow ──────────────────────────────────────────── */
